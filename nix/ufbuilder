@@ -8,8 +8,9 @@ PHONE_HOME_INT="60"
 Help()
 {
     echo "Build a Splunk UF Package for *nix Deployments."
-    echo 
-    echo "Syntax: ufbuilder [-h]"
+    echo
+    echo "Syntax: ufbuilder [-h] base_package deployserver"
+    echo
     echo "base_package  path to the Splunk provided base tar ball"
     echo "deployserver  address and port of the deployment server"
     echo "h             print help"
