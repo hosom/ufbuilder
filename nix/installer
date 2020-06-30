@@ -58,9 +58,9 @@ fi
 cd /opt/splunkforwarder
 
 case $INIT in
-    "init") InitDEnableBootStart 
-    "systemd") SystemDEnableBootStart
-    *) SystemDEnableBootStart
+    "init") InitDEnableBootStart ;;
+    "systemd") SystemDEnableBootStart ;;
+    *) SystemDEnableBootStart ;;
 esac
 
 exit 0

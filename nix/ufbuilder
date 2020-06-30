@@ -1,5 +1,7 @@
 #!/bin/bash
 
+WD=$(pwd)
+
 BUILD_DIR="uf_build"
 PHONE_HOME_INT="60"
 
@@ -114,11 +116,15 @@ if [ $? -ne 0 ]; then
 fi
 
 # build the package
-tar czf splunkforwarder.tgz $BUILD_DIR/splunkforwarder
+cd $BUILD_DIR
+tar czf splunkforwarder.tgz splunkforwarder
 if [ $? -ne 0 ]; then
     echo "Failed to compress Splunk UF package."
     Cleanup
     exit 1
 fi
+
+mv splunkforwarder.tgz $WD/splunkforwarder.tgz
+cd $WD
 
 Cleanup
