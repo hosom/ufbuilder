@@ -1,0 +1,74 @@
+#!/bin/bash
+
+## /build - parent dir for everything
+##      \__ /payload - directory containing all files to be compiled 
+##                     into a single payload.
+##              \__ /installer - shell script installer for Splunk
+##              \__ /splunkforwarder.tgz - Splunk package
+
+WD=$(pwd)
+BUILD_DIR=./build
+PAYLOAD_DIR=$BUILD_DIR/payload
+
+Help()
+{
+    echo "Build Splunk Universal Forwarder Installer"
+    echo 
+    echo "Syntax: installer [-h]"
+    echo "h             print help"
+}
+
+while getopts ":h:" option; do
+    case $option in
+        h) # display help message
+        Help
+        exit;;
+        \?) # invalid option
+        echo "Error: invalid option specified"
+        exit;;
+    esac
+done
+
+SPLUNK_PACKAGE=${@:OPTIND:1}
+
+# create the payload directory
+mkdir -vp $PAYLOAD_DIR
+if [ $? -ne 0 ]; then
+    echo "Failed to create the build directory."
+    exit 1
+fi
+
+cp $SPLUNK_PACKAGE $PAYLOAD_DIR/splunkforwarder.tgz
+if [ $? -ne 0 ]; then
+    echo "Failed to copy package into payload."
+    exit 1
+fi
+
+cp installer $PAYLOAD_DIR/installer
+if [ $? -ne 0 ]; then
+    echo "Failed to copy installer into payload."
+    exit 1
+fi
+
+cp decompress_base $BUILD_DIR/installer
+if [ $? -ne 0 ]; then
+    echo "Failed to copy decompress_base into build."
+    exit 1
+fi
+
+cd $PAYLOAD_DIR
+
+tar -czf splunkinstaller.tgz *
+if [ $? -ne 0 ]; then
+    echo "Failed to create tar bundle."
+    exit 1
+fi
+
+cd $WD
+
+# Add the package to the end of the installer script.
+cat $PAYLOAD_DIR/splunkinstaller.tgz >> $BUILD_DIR/installer
+if [ $? -ne 0 ]; then
+    echo "Failed to add tar bundle to self-extracting installer."
+    exit 1
+fi

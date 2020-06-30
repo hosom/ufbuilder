@@ -1,0 +1,70 @@
+#!/bin/bash
+
+INIT_SYSTEM="systemd"
+
+Help()
+{
+    echo "Install the Splunk Universal Forwarder"
+    echo 
+    echo "Syntax: installer [-h]"
+    echo "i             init system to use (systemd, init)"
+    echo "h             print help"
+}
+
+while getopts ":hi:" option; do
+    case $option in
+        h) # display help message
+        Help
+        exit;;
+        i) INIT_SYSTEM=$OPTARG;;
+        \?) # invalid option
+        echo "Error: invalid option specified"
+        exit;;
+    esac
+done
+
+echo ""
+echo "Self extracting installer for Splunk"
+echo ""
+
+export TMPDIR=$(mktemp -d /tmp/selfextract.XXXXXX)
+if [ $? -ne 0 ]; then
+    echo "Error creating temporary directory."
+    exit 1
+fi
+
+PWD=$(pwd)
+
+Cleanup()
+{
+    cd $PWD
+    rm -rf $TMPDIR
+}
+
+ARCHIVE=$(awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' $0)
+if [ $? -ne 0 ]; then
+    echo "Can't find archive in self-extracting script."
+    Cleanup
+    exit 1
+fi
+
+tail -n+$ARCHIVE $0 | tar xzv -C $TMPDIR
+if [ $? -ne 0 ]; then
+    echo "Error extracting archive to temporary directory."
+    Cleanup
+    exit 1
+fi
+
+cd $TMPDIR
+./installer -i $INIT_SYSTEM
+if [ $? -ne 0 ]; then
+    echo "Installer failed."
+    Cleanup
+    exit 1
+fi
+
+Cleanup
+
+exit 0
+
+__ARCHIVE_BELOW__
