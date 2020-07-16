@@ -1,4 +1,4 @@
-#GLOBAL DEFAULTS
+#GLOBAL DEFAULTS https://www.splunk.com/en_us/download/universal-forwarder.html
 [CmdletBinding()]
 param (
         [parameter(Mandatory=$true, HelpMessage='Enter absolute path to Splunk UF installer, ex: C:\users\user\downloads\splunkforwarder.msi')]
@@ -8,7 +8,7 @@ param (
         [parameter(HelpMessage='Enter output location for install script (default is current user desktop')]
         [string]$InstallScript = ("c:\users\" + "$env:USERNAME" + "\desktop\installer.ps1")
 )
-#https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=windows&version=8.0.4&product=universalforwarder&filename=splunkforwarder-8.0.4-767223ac207f-x64-release.msi&wget=true
+
 function Convert-BinaryToString {
     [CmdletBinding()]
     param (
@@ -43,7 +43,8 @@ $Installer = "function Convert-StringToBinary {
     [string] `$FilePath`
     )
     
-    try {
+    try 
+    {
     if (`$InputString`.Length -ge 1) {
     `$ByteArray` = [System.Convert]::FromBase64String(`$InputString`);
     [System.IO.File]::WriteAllBytes(`$FilePath`, `$ByteArray`);
@@ -79,20 +80,29 @@ if (`$disk`.Free -gt 1073741824)
     {
         if ((Test-Path 'c:\temp\splunktemp') -ne `$true`)
         {
-            New-Item -Path 'c:\temp\' -Name 'splunktemp' -ItemType 'directory'
+            New-Item -Path 'c:\temp\' -Name 'splunktemp' -ItemType 'directory' | Out-Null
         }
 
-        `$TargetFile`= Convert-StringToBinary -InputString $Binary -FilePath c:\temp\splunktemp\splunkforwarder.msi
+        `$TargetFile` = Convert-StringToBinary -InputString $Binary -FilePath c:\temp\splunktemp\splunkforwarder.msi
 
         try
             {    
-                Start-Process -FilePath msiexec.exe -ArgumentList `$MSIArgs` -Wait
+                `$proc` = Start-Process -FilePath msiexec.exe -ArgumentList `$MSIArgs` -Wait -PassThru
+                `$message` = `$proc`.ExitCode.ToString()
 
-                Write-Host (`$env`:COMPUTERNAME + ' success. Check c:\temp\splunktemp\install_log.log to confirm!')
+                if (`$message` -eq '0')
+                    {
+                        Write-Host (`$env`:COMPUTERNAME + ' success. Check c:\temp\splunktemp\install_log.log to confirm!')
+                    }
+                else
+                    {
+                        Write-Error (`$env`:COMPUTERNAME + ' failure. MSI error code ' + `$message`)
+                        Write-Host 'Check c:\temp\splunktemp\install_log.log!'
+                    }
         }
         catch
             {
-                Write-Host (`$env`:COMPUTERNAME + ' failure. Check c:\temp\splunktemp\install_log.log!')
+                Write-Host (`$env`:COMPUTERNAME + ' installer failed to launch. Check c:\temp\splunktemp\install_log.log!')
         }
     }
     else
