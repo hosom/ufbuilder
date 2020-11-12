@@ -35,6 +35,21 @@ function Convert-BinaryToString {
 #Embed binary into script generation
 $Binary = Convert-BinaryToString -FilePath $SplunkForwarder
 
+#Ask whether or not this will be placed in a virtual master image used for cloning
+$YesOrNo = Read-Host -Prompt 'Create the installer for cloned virtual master image? Y/N'
+If ("y", "Y" -contains $YesOrNo)
+    {
+        $LaunchSplunk = '0'
+        $ServiceStartType = 'auto'
+        $ClonePrep = '1'
+    }
+else 
+    {
+        $LaunchSplunk = '1'
+        $ServiceStartType = 'auto'
+        $ClonePrep = '0'
+    }
+
 #Generate installer script
 $Installer = "function Convert-StringToBinary {
     [CmdletBinding()]
@@ -68,6 +83,9 @@ function Cleanup {
             'SPLUNKUSERNAME=`"admin`"'
             'GENRANDOMPASSWORD=1'
             'DEPLOYMENT_SERVER=`"$DeploymentServer`"'
+            'LAUNCHSPLUNK=`"$LaunchSplunk`"'
+            'SERVICESTARTTYPE=`"$ServiceStartType`"'
+            'CLONEPREP=`"$ClonePrep`"'
             '/qn'
             '/l*V c:\temp\splunktemp\install_log.log'
         )
